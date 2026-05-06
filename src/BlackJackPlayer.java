@@ -149,10 +149,8 @@ public class BlackJackPlayer {
         }
         chips = chips.removeChips(currentBet); // pay the extra bet (reassign!)
         currentBet *= 2;
-        Card card = deck.dealCard(this, 0);
-        addCard(card);
+        deck.dealCard(this, 0);
         gameLog.log(name + " doubled down. New bet: " + currentBet);
-        currentHandIndex++;
     }
 
     public boolean canDoubleDown() {
@@ -167,13 +165,17 @@ public class BlackJackPlayer {
         if (!canSplit()) {
             throw new IllegalStateException("Cannot split — conditions not met.");
         }
+        int originalHandIndex = currentHandIndex;
         List<Card> current = getCurrentHand();
         List<Card> newHand = new ArrayList<>();
         newHand.add(current.remove(1));        // move second card to new hand
         hands.add(newHand);
         chips = chips.removeChips(currentBet); // pay split bet (reassign!)
-        current.add(deck.dealCard(this, 0));
-        newHand.add(deck.dealCard(this, 0));
+        currentHandIndex = originalHandIndex;
+        deck.dealCard(this, 0);
+        currentHandIndex = hands.size() - 1;
+        deck.dealCard(this, 0);
+        currentHandIndex = originalHandIndex;
         gameLog.log(name + " split. Hand 1: " + current + " | Hand 2: " + newHand);
     }
 

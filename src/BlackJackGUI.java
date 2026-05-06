@@ -403,7 +403,9 @@ public class BlackJackGUI extends Application {
     private void playerSplit() {
         playVoice("split_ye.mp3");
         player.split(deck);
-        placeSplitBet();
+        messageLabel.setText(messages.getString("split.bet") + currentBet + "!");
+        gameLog.logBet("Captain", currentBet, player.getChips().getTotalChips());
+        updateChipLabels();
         statsTracker.recordGame(false, 0, "Split");
         updateScores();
         displayCards();
@@ -413,6 +415,8 @@ public class BlackJackGUI extends Application {
     private void playerDoubleDown() {
         playVoice("double_down.mp3");
         player.doubleDown(deck);
+        currentBet = player.getCurrentBet();
+        updateChipLabels();
         statsTracker.recordGame(false, 0, "Double Down");
         updateScores();
         displayCards();

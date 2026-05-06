@@ -502,17 +502,22 @@ public class BlackJackGUI extends Application {
             String json = Files.readString(latestSave.toPath());
             Map<String, Object> saveData = mapper.readValue(json, Map.class);
 
-            player.getChips().resetChips((int) saveData.get("playerChips"));
-            aiPlayer.getChips().resetChips((int) saveData.get("aiChips"));
-            remotePlayer.getChips().resetChips((int) saveData.get("remoteChips"));
+            player.setChips(player.getChips().resetChips((int) saveData.get("playerChips")));
+            aiPlayer.setChips(aiPlayer.getChips().resetChips((int) saveData.get("aiChips")));
+            remotePlayer.setChips(remotePlayer.getChips().resetChips((int) saveData.get("remoteChips")));
             currentBet = (int) saveData.get("currentBet");
             aiBet = (int) saveData.get("aiBet");
             remoteBet = (int) saveData.get("remoteBet");
+            syncPlayerBets();
 
             player.clearHands();
             List<List<String>> playerHands = (List<List<String>>) saveData.get("playerHands");
+            player.getHands().clear();
             for (List<String> hand : playerHands) {
                 player.getHands().add(CardParser.parseDeck(String.join(", ", hand)));
+            }
+            if (player.getHands().isEmpty()) {
+                player.getHands().add(new ArrayList<>());
             }
 
             dealer.clearHands();
@@ -528,7 +533,6 @@ public class BlackJackGUI extends Application {
             remotePlayer.getHands().set(0, CardParser.parseDeck(String.join(", ", remoteHand)));
 
             Map<String, Object> profile = (Map<String, Object>) saveData.get("profile");
-            player = new BlackJackPlayer((String) profile.get("username"), player.getChips());
             mediaPlayer.setVolume((Double) profile.get("musicVolume"));
             String aiDifficulty = (String) profile.get("aiDifficulty");
             switch (aiDifficulty) {

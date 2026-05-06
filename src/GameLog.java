@@ -21,7 +21,7 @@ import java.util.UUID;
  * Version: 30
  * Description: A casino-grade logger for Blackjack with player tracking, chip ledger, security, session stats, and rewards.
  */
-public final class GameLog {
+public class GameLog {
     private final Map<String, File> logFiles;
     private final Map<String, Deque<String>> memoryLogs;
     private final Map<String, Deque<Snapshot>> snapshots;

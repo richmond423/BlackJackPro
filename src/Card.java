@@ -10,6 +10,7 @@ public class Card implements Comparable<Card> {
     private final String rank;  // e.g. "2", "10", "J", "Q", "K", "A"
     private final String suit;  // e.g. "Hearts", "Diamonds", "Clubs", "Spades"
     private final int value;    // numeric value (2–11)
+    private boolean marked;
 
     // Static log uses noOp() so a bad path never crashes card construction.
     private static final GameLog gameLog = GameLog.noOp();
@@ -38,6 +39,9 @@ public class Card implements Comparable<Card> {
         return this.rank.equals(other.rank);
     }
 
+    public void markAsSuspicious() { marked = true; }
+    public boolean isMarked() { return marked; }
+
     // -------------------------------------------------------------------------
     // String representations
     // -------------------------------------------------------------------------
@@ -62,6 +66,10 @@ public class Card implements Comparable<Card> {
      */
     public String toImageName() {
         return rank + "_" + suit;
+    }
+
+    public String getImageName() {
+        return toImageName();
     }
 
     // -------------------------------------------------------------------------

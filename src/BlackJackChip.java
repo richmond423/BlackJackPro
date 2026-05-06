@@ -22,7 +22,7 @@ public final class BlackJackChip implements Serializable {
     private final transient Clock clock; // Transient for serialization
     private final List<String> transactionHistory;
 
-    private BlackJackChip(int totalChips, GameLog gameLog, Clock clock, List<String> history) {
+    BlackJackChip(int totalChips, GameLog gameLog, Clock clock, List<String> history) {
         if (totalChips < 0) throw new IllegalArgumentException("Initial chip amount cannot be negative.");
         if (gameLog == null) throw new IllegalArgumentException("GameLog cannot be null.");
         if (clock == null) throw new IllegalArgumentException("Clock cannot be null.");

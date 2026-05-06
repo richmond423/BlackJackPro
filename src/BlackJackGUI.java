@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -1006,7 +1007,4 @@ public class BlackJackGUI extends Application {
         if (isMultiplayer && isHost) sendGameState();
     }
 
-    private void updateChipLabels() {
-        // Placeholder - update labels if needed after load/reset
-    }
 }

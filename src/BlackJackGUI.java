@@ -129,7 +129,7 @@ public class BlackJackGUI extends Application {
         playCurrentSong();
 
         Path deckPath = Paths.get("resources", "deck", "deck.txt");
-        deck = new Deck(deckPath.toString(), 2, gameLog, Clock.systemUTC(), new Random(), 416, 0.75, Deck.DeckType.BLACKJACK);
+        deck = new Deck(deckPath.toString(), 8, gameLog, Clock.systemUTC(), new Random(), 416, 0.75, Deck.DeckType.BLACKJACK);
 
         player = new BlackJackPlayer("Captain", BlackJackChip.create(1000, gameLog, Clock.systemUTC()));
         dealer = new BlackJackPlayer("Dealer Davy Bones", BlackJackChip.create(0, gameLog, Clock.systemUTC()));

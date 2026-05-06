@@ -748,6 +748,7 @@ public class BlackJackGUI extends Application {
         splitButton.setDisable(true);
         doubleDownButton.setDisable(true);
         aiPlay();
+        remotePlay();
         isDealerTurn = true;
         dealerPlay();
         displayCards();
@@ -755,9 +756,7 @@ public class BlackJackGUI extends Application {
     }
 
     private void dealerPlay() {
-        while (dealer.calculateHandValue(dealer.getCurrentHand()) < 17) {
-            dealCardWithAnimation(dealer, 0, dealerCards);
-        }
+        playParticipantToSeventeen(dealer, dealerCards);
         if (dealer.isBust(dealer.getCurrentHand())) {
             messageLabel.setText(messages.getString("dealer.bust"));
             statsTracker.recordGame(true, currentBet, "Dealer Bust");
@@ -771,9 +770,7 @@ public class BlackJackGUI extends Application {
 
     private void aiPlay() {
         messageLabel.setText(messages.getString("ai.turn"));
-        while (aiStrategy.shouldHit(aiPlayer, deck)) {
-            dealCardWithAnimation(aiPlayer, 0, aiCards);
-        }
+        playParticipantToSeventeen(aiPlayer, aiCards);
         if (aiPlayer.isBust(aiPlayer.getCurrentHand())) {
             messageLabel.setText(messages.getString("ai.bust"));
         } else {
@@ -781,6 +778,18 @@ public class BlackJackGUI extends Application {
         }
         updateScores();
         displayCards();
+    }
+
+    private void remotePlay() {
+        playParticipantToSeventeen(remotePlayer, remoteCards);
+        updateScores();
+        displayCards();
+    }
+
+    private void playParticipantToSeventeen(BlackJackPlayer participant, HBox cardContainer) {
+        while (participant.calculateHandValue(participant.getCurrentHand()) < 17) {
+            dealCardWithAnimation(participant, 0, cardContainer);
+        }
     }
 
     private void updateScores() {
@@ -894,75 +903,10 @@ public class BlackJackGUI extends Application {
     }
 
     private void determineWinner() {
-        int playerValue = player.calculateHandValue(player.getCurrentHand());
-        int dealerValue = dealer.calculateHandValue(dealer.getCurrentHand());
-        int aiValue = aiPlayer.calculateHandValue(aiPlayer.getCurrentHand());
-        int remoteValue = remotePlayer.calculateHandValue(remotePlayer.getCurrentHand());
-
         StringBuilder resultMessage = new StringBuilder();
-
-        if (playerValue > 21) {
-            resultMessage.append(messages.getString("player.bust"));
-            statsTracker.recordGame(false, currentBet, "Bust");
-            gameLog.logGameOutcome("Captain", "lost", -currentBet);
-        } else if (dealerValue > 21 || playerValue > dealerValue) {
-            player.setChips(player.getChips().addChips(currentBet * 2));
-            resultMessage.append(messages.getString("player.wins"));
-            statsTracker.recordGame(true, currentBet, "Win");
-            gameLog.logGameOutcome("Captain", "won", currentBet * 2);
-            playVoice("ye_win.mp3");
-        } else if (playerValue == dealerValue) {
-            player.setChips(player.getChips().addChips(currentBet));
-            resultMessage.append(messages.getString("player.ties"));
-            statsTracker.recordGame(false, currentBet, "Tie");
-            gameLog.logGameOutcome("Captain", "tied", currentBet);
-        } else {
-            resultMessage.append(messages.getString("player.loses"));
-            statsTracker.recordGame(false, currentBet, "Loss");
-            gameLog.logGameOutcome("Captain", "lost", -currentBet);
-        }
-
-        if (aiValue > 21) {
-            resultMessage.append(messages.getString("ai.bust"));
-            statsTracker.recordGame(false, aiBet, "Bust");
-            gameLog.logGameOutcome("Scurvy Dog", "lost", -aiBet);
-        } else if (dealerValue > 21 || aiValue > dealerValue) {
-            aiPlayer.setChips(aiPlayer.getChips().addChips(aiBet * 2));
-            resultMessage.append(messages.getString("ai.wins"));
-            statsTracker.recordGame(true, aiBet, "Win");
-            gameLog.logGameOutcome("Scurvy Dog", "won", aiBet * 2);
-        } else if (aiValue == dealerValue) {
-            aiPlayer.setChips(aiPlayer.getChips().addChips(aiBet));
-            resultMessage.append(messages.getString("ai.ties"));
-            statsTracker.recordGame(false, aiBet, "Tie");
-            gameLog.logGameOutcome("Scurvy Dog", "tied", aiBet);
-        } else {
-            resultMessage.append(messages.getString("ai.loses"));
-            statsTracker.recordGame(false, aiBet, "Loss");
-            gameLog.logGameOutcome("Scurvy Dog", "lost", -aiBet);
-        }
-
-        if (isMultiplayer) {
-            if (remoteValue > 21) {
-                resultMessage.append(messages.getString("remote.bust"));
-                statsTracker.recordGame(false, remoteBet, "Bust");
-                gameLog.logGameOutcome("Remote Pirate", "lost", -remoteBet);
-            } else if (dealerValue > 21 || remoteValue > dealerValue) {
-                remotePlayer.setChips(remotePlayer.getChips().addChips(remoteBet * 2));
-                resultMessage.append(messages.getString("remote.wins"));
-                statsTracker.recordGame(true, remoteBet, "Win");
-                gameLog.logGameOutcome("Remote Pirate", "won", remoteBet * 2);
-            } else if (remoteValue == dealerValue) {
-                remotePlayer.setChips(remotePlayer.getChips().addChips(remoteBet));
-                resultMessage.append(messages.getString("remote.ties"));
-                statsTracker.recordGame(false, remoteBet, "Tie");
-                gameLog.logGameOutcome("Remote Pirate", "tied", remoteBet);
-            } else {
-                resultMessage.append(messages.getString("remote.loses"));
-                statsTracker.recordGame(false, remoteBet, "Loss");
-                gameLog.logGameOutcome("Remote Pirate", "lost", -remoteBet);
-            }
-        }
+        resultMessage.append(resolveParticipant(player, currentBet, player.getName(), true));
+        resultMessage.append(resolveParticipant(aiPlayer, aiBet, aiPlayer.getName(), false));
+        resultMessage.append(resolveParticipant(remotePlayer, remoteBet, remotePlayer.getName(), false));
 
         currentBet = 0;
         aiBet = 0;
@@ -974,6 +918,40 @@ public class BlackJackGUI extends Application {
         dealButton.setDisable(true);
         messageLabel.setText(resultMessage.toString());
         if (isMultiplayer && isHost) sendGameState();
+    }
+
+    private String resolveParticipant(BlackJackPlayer participant, int bet, String displayName, boolean playWinningVoice) {
+        if (bet <= 0) {
+            return formatResultLine(displayName, messages.getString("round.noBet"));
+        }
+
+        int participantValue = participant.calculateHandValue(participant.getCurrentHand());
+        int dealerValue = dealer.calculateHandValue(dealer.getCurrentHand());
+
+        if (participantValue > 21) {
+            statsTracker.recordGame(false, bet, "Bust");
+            gameLog.logGameOutcome(displayName, "lost", -bet);
+            return formatResultLine(displayName, messages.getString("round.bust"));
+        } else if (dealerValue > 21 || participantValue > dealerValue) {
+            participant.setChips(participant.getChips().addChips(bet * 2));
+            statsTracker.recordGame(true, bet, "Win");
+            gameLog.logGameOutcome(displayName, "won", bet * 2);
+            if (playWinningVoice) playVoice("ye_win.mp3");
+            return formatResultLine(displayName, messages.getString("round.win"));
+        } else if (participantValue == dealerValue) {
+            participant.setChips(participant.getChips().addChips(bet));
+            statsTracker.recordGame(false, bet, "Tie");
+            gameLog.logGameOutcome(displayName, "tied", bet);
+            return formatResultLine(displayName, messages.getString("round.push"));
+        } else {
+            statsTracker.recordGame(false, bet, "Loss");
+            gameLog.logGameOutcome(displayName, "lost", -bet);
+            return formatResultLine(displayName, messages.getString("round.loss"));
+        }
+    }
+
+    private String formatResultLine(String displayName, String outcome) {
+        return displayName + ": " + outcome + "\n";
     }
 
     private void disableGameplayButtons() {
